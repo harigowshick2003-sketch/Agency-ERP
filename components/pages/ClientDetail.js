@@ -208,7 +208,7 @@ export default function ClientDetail({ state, onRefresh, onNavigate }) {
       {/* Deliverables */}
       {tab === 'deliverables' && (
         <Card style={{ padding: 0 }}>
-          <Table headers={['Date', 'Code', 'Type', 'Platform', 'Content', 'Creative', 'Client', 'Posted']}>
+          <Table headers={['Date', 'Code', 'Type', 'Platform', 'Content', 'Ref', 'Creative', 'Ref', 'Client', 'Posted']}>
             {clientDelivs.map(d => {
               const t = d.daily_tracker?.[0] || {}
               return (
@@ -218,7 +218,9 @@ export default function ClientDetail({ state, onRefresh, onNavigate }) {
                   <Td><ActivityBadge type={d.activity_type} /></Td>
                   <Td style={{ color: '#6b7280', fontSize: 12 }}>{d.platform || '-'}</Td>
                   <Td><select value={t.content_status || ''} onChange={e => updateTracker(t.id, d.id, 'content_status', e.target.value)} style={selStyle}><option value="">—</option>{CONTENT_STATUSES.map(s => <option key={s}>{s}</option>)}</select></Td>
+                  <Td><RefLinkCell value={t.content_reference} onSave={url => updateTracker(t.id, d.id, 'content_reference', url)} color="#4f46e5" /></Td>
                   <Td><select value={t.creative_status || ''} onChange={e => updateTracker(t.id, d.id, 'creative_status', e.target.value)} style={selStyle}><option value="">—</option>{CREATIVE_STATUSES.map(s => <option key={s}>{s}</option>)}</select></Td>
+                  <Td><RefLinkCell value={t.creative_reference} onSave={url => updateTracker(t.id, d.id, 'creative_reference', url)} color="#8b5cf6" /></Td>
                   <Td><select value={t.client_status || ''} onChange={e => updateTracker(t.id, d.id, 'client_status', e.target.value)} style={selStyle}><option value="">—</option>{CLIENT_STATUSES.map(s => <option key={s}>{s}</option>)}</select></Td>
                   <Td><select value={t.posting_status || ''} onChange={e => updateTracker(t.id, d.id, 'posting_status', e.target.value)} style={selStyle}><option value="">—</option>{POSTING_STATUSES.map(s => <option key={s}>{s}</option>)}</select></Td>
                 </tr>
@@ -328,5 +330,52 @@ function InfoRow({ label, value }) {
       <span style={{ color: '#9ca3af', minWidth: 100, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{label}</span>
       <span style={{ color: '#374151', fontWeight: 500 }}>{value || '—'}</span>
     </div>
+  )
+}
+
+function RefLinkCell({ value, onSave, color = '#4f46e5' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value || '')
+
+  function save() {
+    onSave(draft)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', minWidth: 180 }}>
+        <input
+          autoFocus
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+          placeholder="Paste URL..."
+          style={{
+            flex: 1, fontSize: 12, padding: '3px 7px', borderRadius: 5,
+            border: '1.5px solid #e2e6ef', outline: 'none', fontFamily: 'Inter,sans-serif',
+            background: '#f8f9fc', color: '#374151',
+          }}
+        />
+        <button onClick={save} style={{ background: color, color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>✓</button>
+        <button onClick={() => setEditing(false)} style={{ background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: 5, padding: '3px 7px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+      </div>
+    )
+  }
+
+  if (value) {
+    return (
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <a href={value} target="_blank" rel="noreferrer" style={{ color, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>↗ Link</a>
+        <button onClick={() => { setDraft(value); setEditing(true) }} title="Edit link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 11, padding: '1px 3px' }}>✏️</button>
+      </div>
+    )
+  }
+
+  return (
+    <button onClick={() => { setDraft(''); setEditing(true) }} title="Add link" style={{
+      background: '#f3f4f6', border: '1.5px dashed #d1d5db', borderRadius: 5,
+      color: '#9ca3af', fontSize: 11, cursor: 'pointer', padding: '2px 7px', fontFamily: 'Inter,sans-serif',
+    }}>+ Link</button>
   )
 }

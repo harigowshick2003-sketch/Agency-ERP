@@ -161,7 +161,7 @@ function DailyTracker({ state, onUpdateTracker }) {
         <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 'auto', fontWeight: 500 }}>{filtered.length} records</span>
       </div>
       <Card style={{ padding: 0 }}>
-        <Table headers={['Date', 'Client', 'Activity', 'Type', 'Platform', 'Content', 'Creative', 'Client Appr.', 'Posting', 'Notes']}>
+        <Table headers={['Date', 'Client', 'Activity', 'Type', 'Platform', 'Content', 'Ref', 'Creative', 'Ref', 'Client Appr.', 'Posting', 'Notes']}>
           {filtered.map(d => {
             const t = d.daily_tracker?.[0] || {}
             const done = t.posting_status === 'Posted'
@@ -178,12 +178,14 @@ function DailyTracker({ state, onUpdateTracker }) {
                     {CONTENT_STATUSES.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </Td>
+                <Td><RefLinkCell value={t.content_reference} onSave={url => onUpdateTracker(t.id, d.id, 'content_reference', url)} color="#4f46e5" /></Td>
                 <Td>
                   <select value={t.creative_status || ''} style={selectStyle} onChange={e => onUpdateTracker(t.id, d.id, 'creative_status', e.target.value)}>
                     <option value="">—</option>
                     {CREATIVE_STATUSES.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </Td>
+                <Td><RefLinkCell value={t.creative_reference} onSave={url => onUpdateTracker(t.id, d.id, 'creative_reference', url)} color="#8b5cf6" /></Td>
                 <Td>
                   <select value={t.client_status || ''} style={selectStyle} onChange={e => onUpdateTracker(t.id, d.id, 'client_status', e.target.value)}>
                     <option value="">—</option>
@@ -360,5 +362,52 @@ function ClientContentTab({ state }) {
         {filtered.length === 0 && <EmptyState message="No content details found" />}
       </Card>
     </>
+  )
+}
+
+function RefLinkCell({ value, onSave, color = '#4f46e5' }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value || '')
+
+  function save() {
+    onSave(draft)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', minWidth: 180 }}>
+        <input
+          autoFocus
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+          placeholder="Paste URL..."
+          style={{
+            flex: 1, fontSize: 12, padding: '3px 7px', borderRadius: 5,
+            border: '1.5px solid #e2e6ef', outline: 'none', fontFamily: 'Inter,sans-serif',
+            background: '#f8f9fc', color: '#374151',
+          }}
+        />
+        <button onClick={save} style={{ background: color, color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>✓</button>
+        <button onClick={() => setEditing(false)} style={{ background: '#f3f4f6', color: '#6b7280', border: 'none', borderRadius: 5, padding: '3px 7px', cursor: 'pointer', fontSize: 11 }}>✕</button>
+      </div>
+    )
+  }
+
+  if (value) {
+    return (
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <a href={value} target="_blank" rel="noreferrer" style={{ color, fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>↗ Link</a>
+        <button onClick={() => { setDraft(value); setEditing(true) }} title="Edit link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 11, padding: '1px 3px' }}>✏️</button>
+      </div>
+    )
+  }
+
+  return (
+    <button onClick={() => { setDraft(''); setEditing(true) }} title="Add link" style={{
+      background: '#f3f4f6', border: '1.5px dashed #d1d5db', borderRadius: 5,
+      color: '#9ca3af', fontSize: 11, cursor: 'pointer', padding: '2px 7px', fontFamily: 'Inter,sans-serif',
+    }}>+ Link</button>
   )
 }
